@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'Todo/todo.dart';
+import 'addtodo.dart';
+import 'client/hive_names.dart';
 
 
 import 'apichuck.dart';
@@ -14,15 +16,33 @@ void main() async {
     await Hive.initFlutter();
     Hive.registerAdapter(TodoAdapter());
     await Hive.openBox<Todo>(HiveBoxes.todo);
-    runApp(const MaterialApp(
-    title: 'Navigation Basics',
-    home: MyHomePage(),
-  ));
+    runApp(MyApp());
 }
 
-class HiveBoxes {
-  static String todo = 'todo_box';
+
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
 }
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void dispose() async {
+    Hive.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MyHomePage(),
+    );
+  }
+}
+
 
 class MyHomePage extends StatefulWidget {
 
@@ -36,7 +56,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   late Future<void> mem;
-
+  late String note;
 
   @override
   void initState() {
@@ -65,6 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   Container(
                                       alignment: Alignment.topCenter,
                                       child: Text("${snapshot.data!.value} ",
+                                        semanticsLabel: note = snapshot.data!.value,
                                           )),
                                   // Button for refresh de App
                                   Container(
@@ -86,6 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               child: ElevatedButton(
                                 child: Text('Добавить в избранное'),
                                 onPressed: (){
+                                  _add();
                                   print('добавленно в избранное');
                                 },
                               ),
@@ -113,8 +135,17 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     );
                   },
-                )
+                ),
+        floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => AddTo(title: '',))),
+    tooltip: 'Add todo',
+        )
     );
+  }
+  void _add(){
+    Box<Todo> contactsBox = Hive.box<Todo>(HiveBoxes.todo);
+    contactsBox.add(Todo(note: note));
   }
 }
 
